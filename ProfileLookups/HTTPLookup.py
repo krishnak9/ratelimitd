@@ -32,7 +32,7 @@ class HTTPLookup:
             try:
                 profile = urllib.urlopen(self.url.replace('%s', key)).read().lower()
                 if ttl != 0:
-                    RedisConn.Redis_Master.setex('HTTPLookupProfile_' + key, profile, ttl)
+                    RedisConn.Redis_Master.setex('HTTPLookupProfile_' + key, ttl, profile)
             except Exception as e:
                 Logger.log('HTTPLookup Error :  %s Message : %s' % (type(e), e.args))
                 profile = 'default'

@@ -33,7 +33,7 @@ class HashLookup:
             try:
                 profile = bsddb.hashopen(self.dbfile, "r").get(key, 'default').lower()
                 if ttl != 0:
-                    RedisConn.Redis_Master.setex('HashLookupProfile_' + key, profile, ttl)
+                    RedisConn.Redis_Master.setex('HashLookupProfile_' + key, ttl, profile)
             except Exception as e:
                 Logger.log('HashLookup Error :  %s Message : %s' % (type(e), e.args))
                 profile = 'default'
