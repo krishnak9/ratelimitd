@@ -68,14 +68,16 @@ class RedisConn(object):
     '''
 
     LUA_INCR_MULTIPLE = '''
+    local cnt_return = {}
     for i,key in ipairs(KEYS) do
         local cnt = redis.call('INCR', key)
+        cnt_return[i] = cnt
         if cnt == 1
         then
             redis.call('EXPIRE', key, ARGV[i])
         end
     end
-    return 0      
+    return cnt_return      
     '''
 
     LUA_DO_NOTHING = '''

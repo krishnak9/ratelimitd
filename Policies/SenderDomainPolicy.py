@@ -86,7 +86,7 @@ class SenderDomainPolicy:
                     'SenderDomainPolicy Unable To Spilt Sender (%s) Action: accept' % (self.message.data[self.key]))
             else:
                 Logger.log('SenderDomainPolicy SenderDomain: %s Quota: (%s/%s) Profile: %s Action: accept' % (
-                    self.value, str(int(redis_val)), str(SenderDomainPolicy.quota[self.profile][0]), self.profile))
+                    self.value, str(redis_val), str(SenderDomainPolicy.quota[self.profile][0]), self.profile))
         else:
             Logger.log('SenderDomainPolicy SenderDomain: %s Quota: Exceeded Profile: %s Action: reject' % (
                 self.value, self.profile))
