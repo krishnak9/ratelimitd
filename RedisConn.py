@@ -74,7 +74,8 @@ class RedisConn(object):
         then
             redis.call('EXPIRE', key, ARGV[i])
         end
-        return cnt
+    end
+    return 0      
     '''
 
     LUA_DO_NOTHING = '''
