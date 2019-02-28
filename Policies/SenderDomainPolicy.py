@@ -32,10 +32,20 @@ class SenderDomainPolicy:
         self.RejectMessage = parsed_config.get('SenderDomainPolicy', 'RejectMessage')
         self.ProfileLookupObj = ProfileLookup.create_profile_lookup('SenderDomainPolicy', parsed_config)
         self.ProfileCacheTTL = parsed_config.getint('SenderDomainPolicy', 'ProfileCacheTime')
+        Logger.log(str(parsed_config.items('SenderDomainPolicy-Profiles')))
         for i in parsed_config.items('SenderDomainPolicy-Profiles'):
-            limits = i[1].split(',')
+            Logger.log(str(i))
+            rates = i[1].split(',')
+            limits = []
+            Logger.log(str(rates))
+            for rate in rates:
+                limits.append(rate.split('/'))
             profile = i[0].lower()
-            SenderDomainPolicy.quota[profile] = (int(limits[0]), int(limits[1]))
+            SenderDomainPolicy.quota[profile] = []#(int(limits[0]), int(limits[1]))
+            for limit in limits:
+                mails = int(limit[0])
+                time = int(limit[1])
+                SenderDomainPolicy.quota[profile].append([mails,time])
         self.value = self.profile = self.error = None
 
     def check_quota(self, message, redis_pipe):
@@ -43,8 +53,14 @@ class SenderDomainPolicy:
         try:
             self.value = message.data[self.key].split('@')[1].lower()
             self.profile = self.ProfileLookupObj.lookup(self.value, self.ProfileCacheTTL)
-            RedisConn.LUA_CALL_CHECK_LIMIT(keys=[SenderDomainPolicy.prefix + self.value],
-                                           args=[SenderDomainPolicy.quota[self.profile][0]], client=redis_pipe)
+            object_keys = []
+            object_args = []
+            no_of_limits = len(SenderDomainPolicy.quota[self.profile])
+            for l_no in range(0,no_of_limits):
+                object_keys.append(SenderDomainPolicy.prefix + self.value + "_" + str(l_no))
+                object_args.append(SenderDomainPolicy.quota[self.profile][0])    
+            RedisConn.LUA_CALL_CHECK_LIMIT_MULTIPLE(keys=object_keys,
+                                           args=object_args, client=redis_pipe)
         except IndexError:
             self.error = True
             self.message = message
@@ -54,8 +70,14 @@ class SenderDomainPolicy:
         if self.error:
             RedisConn.LUA_CALL_DO_NOTHING_MASTER(keys=[], args=[], client=redis_pipe)
         else:
-            RedisConn.LUA_CALL_INCR(keys=[SenderDomainPolicy.prefix + self.value],
-                                    args=[SenderDomainPolicy.quota[self.profile][1]], client=redis_pipe)
+            object_keys = []
+            object_args = []
+            no_of_limits = len(SenderDomainPolicy.quota[self.profile])
+            for l_no in range(0,no_of_limits):
+                object_keys.append(SenderDomainPolicy.prefix + self.value + "_" + str(l_no))
+                object_args.append(SenderDomainPolicy.quota[self.profile][1]) 
+            RedisConn.LUA_CALL_INCR_MULTIPLE(keys=object_keys,
+                                    args=object_args, client=redis_pipe)
 
     def log_quota(self, accept, redis_val=None):
         if accept:

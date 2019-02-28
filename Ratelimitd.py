@@ -55,5 +55,5 @@ class Ratelimitd(object):
 
 
 if __name__ == '__main__':
-    App = Ratelimitd('/opt/ratelimitd/etc/ratelimitd.conf')
+    App = Ratelimitd('/etc/ratelimitd_dev/ratelimitd/ratelimitd.conf')
     App.run(sys.argv)

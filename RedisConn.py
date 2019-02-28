@@ -44,6 +44,20 @@ class RedisConn(object):
     end
     '''
 
+    LUA_CHECK_LIMIT_MULTIPLE = '''
+    for i,key in ipairs(KEYS) do
+        if redis.call("EXISTS",key) == 1 
+        then                                                                                                             
+            local cnt = redis.call('GET', key)
+            if cnt + 1 > tonumber(ARGV[i])
+            then
+                return 1
+            end
+        end
+    end    
+    return 0
+    '''
+
     LUA_INCR = '''
     local cnt = redis.call('INCR', KEYS[1])
     if cnt == 1
@@ -51,6 +65,16 @@ class RedisConn(object):
         redis.call('EXPIRE', KEYS[1], ARGV[1])
     end
     return cnt
+    '''
+
+    LUA_INCR_MULTIPLE = '''
+    for i,key in ipairs(KEYS) do
+        local cnt = redis.call('INCR', key)
+        if cnt == 1
+        then
+            redis.call('EXPIRE', key, ARGV[i])
+        end
+        return cnt
     '''
 
     LUA_DO_NOTHING = '''
@@ -81,6 +105,9 @@ class RedisConn(object):
             RedisConn.LUA_CALL_CHECK_LIMIT = RedisConn.Redis_Slave.register_script(RedisConn.LUA_CHECK_LIMIT)
             RedisConn.LUA_CALL_DO_NOTHING_SLAVE = RedisConn.Redis_Slave.register_script(RedisConn.LUA_DO_NOTHING)
             RedisConn.LUA_CALL_DO_NOTHING_MASTER = RedisConn.Redis_Slave.register_script(RedisConn.LUA_DO_NOTHING)
+            RedisConn.LUA_CALL_INCR_MULTIPLE = RedisConn.Redis_Master.register_script(RedisConn.LUA_INCR_MULTIPLE)
+            RedisConn.LUA_CALL_CHECK_LIMIT_MULTIPLE = RedisConn.Redis_Slave.register_script(RedisConn.LUA_CHECK_LIMIT_MULTIPLE)
+
         except Exception, E:
             Logger.log(str(E))
             Logger.log('Server Shutting Down')
