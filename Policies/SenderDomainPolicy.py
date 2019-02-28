@@ -58,7 +58,7 @@ class SenderDomainPolicy:
             no_of_limits = len(SenderDomainPolicy.quota[self.profile])
             for l_no in range(0,no_of_limits):
                 object_keys.append(SenderDomainPolicy.prefix + self.value + "_" + str(l_no))
-                object_args.append(SenderDomainPolicy.quota[self.profile][0])    
+                object_args.append(SenderDomainPolicy.quota[self.profile][l_no][0])    
             RedisConn.LUA_CALL_CHECK_LIMIT_MULTIPLE(keys=object_keys,
                                            args=object_args, client=redis_pipe)
         except IndexError:
@@ -75,7 +75,7 @@ class SenderDomainPolicy:
             no_of_limits = len(SenderDomainPolicy.quota[self.profile])
             for l_no in range(0,no_of_limits):
                 object_keys.append(SenderDomainPolicy.prefix + self.value + "_" + str(l_no))
-                object_args.append(SenderDomainPolicy.quota[self.profile][1]) 
+                object_args.append(SenderDomainPolicy.quota[self.profile][l_no][1]) 
             RedisConn.LUA_CALL_INCR_MULTIPLE(keys=object_keys,
                                     args=object_args, client=redis_pipe)
 
