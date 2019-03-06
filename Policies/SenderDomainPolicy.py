@@ -32,12 +32,9 @@ class SenderDomainPolicy:
         self.RejectMessage = parsed_config.get('SenderDomainPolicy', 'RejectMessage')
         self.ProfileLookupObj = ProfileLookup.create_profile_lookup('SenderDomainPolicy', parsed_config)
         self.ProfileCacheTTL = parsed_config.getint('SenderDomainPolicy', 'ProfileCacheTime')
-        Logger.log(str(parsed_config.items('SenderDomainPolicy-Profiles')))
         for i in parsed_config.items('SenderDomainPolicy-Profiles'):
-            Logger.log(str(i))
             rates = i[1].split(',')
             limits = []
-            Logger.log(str(rates))
             for rate in rates:
                 limits.append(rate.split('/'))
             profile = i[0].lower()
@@ -53,6 +50,8 @@ class SenderDomainPolicy:
         try:
             self.value = message.data[self.key].split('@')[1].lower()
             self.profile = self.ProfileLookupObj.lookup(self.value, self.ProfileCacheTTL)
+            #object_keys holds redis keys 
+            #object_args holds limit values , that are to be inserted against keys
             object_keys = []
             object_args = []
             no_of_limits = len(SenderDomainPolicy.quota[self.profile])
@@ -84,9 +83,20 @@ class SenderDomainPolicy:
             if self.error:
                 Logger.log(
                     'SenderDomainPolicy Unable To Spilt Sender (%s) Action: accept' % (self.message.data[self.key]))
-            else:
-                Logger.log('SenderDomainPolicy SenderDomain: %s Quota: (%s/%s) Profile: %s Action: accept' % (
-                    self.value, str(redis_val), str(SenderDomainPolicy.quota[self.profile][0]), self.profile))
+            else:  
+                Logger.log('SenderDomainPolicy SenderDomain: %s Quota: %s Profile: %s Action: accept' % (
+                    self.value, self.create_log_data(redis_val) , self.profile))    
         else:
             Logger.log('SenderDomainPolicy SenderDomain: %s Quota: Exceeded Profile: %s Action: reject' % (
-                self.value, self.profile))
+                self.value, self.profile))  
+
+    def create_log_data(self, redis_val=None):
+        # function to create log messages if we have multiple limits
+        limits = SenderDomainPolicy.quota[self.profile]
+        current_values = list(redis_val)
+        limits_len = len(current_values)
+        log_string = ""
+        for i in limits_len:
+            log_string = log_string + " limit (%s/%s) " % (redis_val[i],limits[i][0])
+        return log_string    
+

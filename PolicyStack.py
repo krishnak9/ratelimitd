@@ -67,6 +67,11 @@ class PolicyStack:
     @staticmethod
     def check_policy(message):
         try:
+            # Don't check for ratelimits if both sender and recipient(s) have same domain
+            # Internal delivery will happen for above case.
+            if message.data['sender'].split('@')[1]==message.data['recipient'].split('@')[1]:
+                Logger.log('Info: Internal email delivery, skip counting ')
+                return PostfixParser.DUNNO
             pipe = RedisConn.Redis_Slave.pipeline()
             for policy in PolicyStack.policies:
                 policy.check_quota(message, pipe)
