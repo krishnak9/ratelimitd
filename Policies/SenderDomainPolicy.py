@@ -96,7 +96,7 @@ class SenderDomainPolicy:
         current_values = list(redis_val)
         limits_len = len(current_values)
         log_string = ""
-        for i in limits_len:
+        for i in range(0,limits_len):
             log_string = log_string + " limit (%s/%s) " % (redis_val[i],limits[i][0])
         return log_string    
 
