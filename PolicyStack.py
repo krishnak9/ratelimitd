@@ -23,6 +23,7 @@ from Policies.RecipientPolicy import RecipientPolicy
 from Policies.SaslSenderDomainPolicy import SaslSenderDomainPolicy
 from Policies.SaslSenderPolicy import SaslSenderPolicy
 from Policies.SenderDomainPolicy import SenderDomainPolicy
+from Policies.SenderDomainBasedSenderPolicy import SenderDomainBasedSenderPolicy
 from Policies.SenderPolicy import SenderPolicy
 from PostfixParser import PostfixParser
 from RedisConn import RedisConn
@@ -59,6 +60,8 @@ class PolicyStack:
                         PolicyStack.policies.append(SaslSenderPolicy(parsed_config))
                     elif policy == 'SaslSenderDomainPolicy':
                         PolicyStack.policies.append(SaslSenderDomainPolicy(parsed_config))
+                    elif policy == 'SenderDomainBasedSenderPolicy':
+                        PolicyStack.policies.append(SenderDomainBasedSenderPolicy(parsed_config))
             except Exception, e:
                 Logger.log('Error In Policies Initialization %s ' % str(e))
                 Logger.log('Server Shutting Down')
